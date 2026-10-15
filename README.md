@@ -1,0 +1,1 @@
+# shema-jornada-da-palavra
