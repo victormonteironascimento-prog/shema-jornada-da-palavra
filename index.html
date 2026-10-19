@@ -381,4 +381,130 @@ function phMapUpdate(){let p=phProgress(),un=phUnlocked();for(let i=1;i<=PH.leng
 
 function phRead(){let d=PH[phN-1],bookIndex=bibleBooks.findIndex(x=>x[1]===d[10]);go('bible');let b=document.getElementById('bibleBook');if(b&&bookIndex>=0){b.value=String(bookIndex);if(typeof updateBibleChapters==='function')updateBibleChapters();let c=document.getElementById('bibleChapter');if(c)c.value=String(d[11]);if(typeof loadBibleChapter==='function')loadBibleChapter()}}
 </script>
+<!-- SHEMA v7: autenticação Supabase. Cole este bloco imediatamente ANTES de </body>.
+     Aplique SOMENTE na branch feature/supabase-email-auth. -->
+<style>
+  #shemaAuth{position:fixed;inset:0;z-index:9999;overflow:auto;background:radial-gradient(circle at top,#392917,#0d0c0a 55%);color:#f7f0e4;font:15px system-ui,sans-serif;padding:22px;display:grid;place-items:center}
+  #shemaAuth[hidden]{display:none!important}
+  #shemaAuth .auth-card{width:min(100%,420px);background:#191611;border:1px solid #59452a;border-radius:20px;padding:24px}
+  #shemaAuth h1{color:#f2cf80;font-size:28px;margin:0 0 8px}
+  #shemaAuth p{color:#b8aa95;line-height:1.5}
+  #shemaAuth label{display:block;margin:14px 0 5px}
+  #shemaAuth input{width:100%;padding:13px;border:1px solid #59452a;border-radius:10px;background:#0d0c0a;color:#fff;font:inherit}
+  #shemaAuth button{width:100%;padding:13px;margin-top:12px;border:0;border-radius:10px;background:#d9aa50;color:#171109;font-weight:800;cursor:pointer}
+  #shemaAuth button:disabled{opacity:.55;cursor:wait}
+  #shemaAuth .auth-link{background:transparent;color:#f2cf80;border:1px solid #59452a}
+  #shemaAuth #authMessage{min-height:25px;white-space:pre-wrap}
+  #shemaLogout{display:none;margin-left:8px;border:1px solid #765927;border-radius:9px;background:#292011;color:#f2cf80;padding:8px;font-size:12px;cursor:pointer}
+</style>
+<div id="shemaAuth" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-card">
+    <h1 id="authTitle">✦ SHEMA</h1>
+    <p id="authSubtitle">Entre para começar sua Jornada da Palavra.</p>
+    <form id="authForm">
+      <div id="authEmailGroup"><label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="email" required></div>
+      <div id="authPasswordGroup"><label for="authPassword">Senha</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></div>
+      <button id="authSubmit" type="submit">Entrar</button>
+    </form>
+    <p id="authMessage" role="status" aria-live="polite"></p>
+    <button class="auth-link" id="authSwitch" type="button">Criar conta</button>
+    <button class="auth-link" id="authForgot" type="button">Esqueci minha senha</button>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  const URL='https://ghzvomquldrqpsosvbig.supabase.co';
+  const KEY='sb_publishable_YoWewGy2x7iOoWoEOYUoFg_8B6Y2ay2';
+  const authBox=document.getElementById('shemaAuth');
+  const app=document.querySelector('.app');
+  const form=document.getElementById('authForm');
+  const email=document.getElementById('authEmail');
+  const password=document.getElementById('authPassword');
+  const msg=document.getElementById('authMessage');
+  const submit=document.getElementById('authSubmit');
+  const sw=document.getElementById('authSwitch');
+  const forgot=document.getElementById('authForgot');
+  const pwGroup=document.getElementById('authPasswordGroup');
+  const emailGroup=document.getElementById('authEmailGroup');
+  const title=document.getElementById('authTitle');
+  const subtitle=document.getElementById('authSubtitle');
+  let mode='login';
+  let client;
+  if(app) app.inert=true;
+  function message(s){msg.textContent=s||'';}
+  function setMode(next){
+    mode=next;message('');form.reset();
+    emailGroup.hidden=next==='update';
+    pwGroup.hidden=next==='reset';
+    email.required=next!=='update';
+    password.required=next!=='reset';
+    password.autocomplete=next==='signup'||next==='update'?'new-password':'current-password';
+    title.textContent=next==='signup'?'Criar conta':next==='reset'?'Recuperar senha':next==='update'?'Nova senha':'✦ SHEMA';
+    subtitle.textContent=next==='signup'?'Confirme seu e-mail após o cadastro.':next==='reset'?'Enviaremos um link de recuperação para seu e-mail.':next==='update'?'Escolha sua nova senha.':'Entre para começar sua Jornada da Palavra.';
+    submit.textContent=next==='signup'?'Cadastrar':next==='reset'?'Enviar link':next==='update'?'Salvar nova senha':'Entrar';
+    sw.textContent=next==='login'?'Criar conta':'Voltar para entrar';
+    forgot.hidden=next==='reset'||next==='update';
+  }
+  function showApp(session){
+    const signed=!!(session&&session.user);
+    authBox.hidden=signed;
+    if(app)app.inert=!signed;
+    let logout=document.getElementById('shemaLogout');
+    if(!logout){
+      logout=document.createElement('button');logout.id='shemaLogout';logout.type='button';logout.textContent='Sair';
+      logout.addEventListener('click',async()=>{try{await client.auth.signOut();}catch(e){message('Não foi possível sair. Tente novamente.');}});
+      const head=document.querySelector('.head');if(head)head.appendChild(logout);
+    }
+    logout.style.display=signed?'inline-block':'none';
+  }
+  function readableError(e){
+    const s=String(e&&e.message||'');
+    if(/invalid login credentials/i.test(s))return 'E-mail ou senha incorretos, ou conta ainda não confirmada.';
+    if(/email not confirmed/i.test(s))return 'Confirme seu e-mail antes de entrar.';
+    if(/user already registered/i.test(s))return 'Esse e-mail já está cadastrado.';
+    if(/password/i.test(s)&&/weak|short|length/i.test(s))return 'Escolha uma senha mais forte, com pelo menos 8 caracteres.';
+    if(/rate limit|too many requests/i.test(s))return 'Muitas tentativas. Aguarde e tente novamente.';
+    return 'Não foi possível concluir. Verifique sua conexão e tente novamente.';
+  }
+  if(!window.supabase||!window.supabase.createClient){
+    message('Não foi possível carregar o serviço de autenticação. Verifique a internet e recarregue a página.');
+    submit.disabled=true;return;
+  }
+  client=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sw.addEventListener('click',()=>setMode(mode==='login'?'signup':'login'));
+  forgot.addEventListener('click',()=>setMode('reset'));
+  form.addEventListener('submit',async(ev)=>{
+    ev.preventDefault();submit.disabled=true;message('Aguarde...');
+    try{
+      const e=email.value.trim();const p=password.value;
+      if(mode==='signup'){
+        const {error}=await client.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}});
+        if(error)throw error;
+        setMode('login');message('Cadastro solicitado. Verifique sua caixa de entrada e confirme seu e-mail antes de entrar.');
+      }else if(mode==='login'){
+        const {error}=await client.auth.signInWithPassword({email:e,password:p});if(error)throw error;
+      }else if(mode==='reset'){
+        const {error}=await client.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});if(error)throw error;
+        setMode('login');message('Se esse e-mail estiver cadastrado, você receberá um link de recuperação.');
+      }else if(mode==='update'){
+        const {error}=await client.auth.updateUser({password:p});if(error)throw error;
+        setMode('login');showApp((await client.auth.getSession()).data.session);message('Senha atualizada.');
+      }
+    }catch(err){message(readableError(err));}
+    finally{submit.disabled=false;}
+  });
+  client.auth.onAuthStateChange((event,session)=>{
+    if(event==='PASSWORD_RECOVERY'){
+      showApp(null);setMode('update');return;
+    }
+    if(mode!=='update')showApp(session);
+  });
+  client.auth.getSession().then(({data,error})=>{
+    if(error){message(readableError(error));showApp(null);return;}
+    if(mode!=='update')showApp(data.session);
+  }).catch(()=>{showApp(null);message('Não foi possível verificar sua sessão.');});
+})();
+</script>
 </body></html>
