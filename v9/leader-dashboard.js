@@ -11,6 +11,7 @@ panel.innerHTML=[
 '<p class="sl-muted">O líder vê apenas casas concluídas, XP e última sincronização. Reflexões, orações e marcações permanecem privadas.</p>',
 '<p id="slStatus" class="sl-muted" role="status" aria-live="polite">Entre em sua conta do Shema.</p>',
 '<div id="slArea" hidden>',
+'<div class="sl-section" id="slRequestSection"><h3>Seu acesso como líder</h3><p class="sl-muted">Solicite a ativação do perfil de líder usando sua conta conectada. A aprovação é feita em ambiente de testes.</p><button class="btn secondary" type="button" id="slRequest">Solicitar acesso de líder</button></div>',
 '<div class="sl-section"><h3>Participar de um grupo</h3>',
 '<label>Código de convite <input id="slCode" maxlength="22" autocomplete="off" placeholder="Código informado pelo líder"></label>',
 '<label>Seu nome no grupo <input id="slName" maxlength="60" autocomplete="nickname" placeholder="Nome de exibição"></label>',
@@ -38,7 +39,7 @@ async function act(task){if(busy)return;busy=true;panel.querySelectorAll('button
 function node(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(cls)n.className=cls;return n}
 function button(text,cb){const b=node('button',text,'btn secondary');b.type='button';b.addEventListener('click',cb);return b}
 async function loadState(){state=await rpc('shema_group_state');render();status('Grupos atualizados.')}
-function render(){if(!state)return;$('slLeaderArea').hidden=!state.isLeader;
+function render(){if(!state)return;$('slLeaderArea').hidden=!state.isLeader;$('slRequestSection').hidden=!!state.isLeader;
 const my=$('slJoined');my.replaceChildren();
 if(!state.joined.length)my.append(node('p','Você ainda não participa de um grupo.','sl-muted'));
 state.joined.forEach(g=>{const row=node('div',undefined,'sl-row'),col=node('div');col.append(node('strong',g.title),node('p','Nome exibido: '+g.name,'sl-muted'));row.append(col,button('Sair',()=>act(async()=>{if(!confirm('Sair do grupo '+g.title+'? Seu líder perderá acesso às suas estatísticas.'))return;await rpc('shema_group_leave',{p_group_id:g.id});await loadState()})));my.append(row)});
@@ -47,6 +48,7 @@ state.leading.forEach(g=>{const row=node('div',undefined,'sl-row'),col=node('div
 if(state.isLeader&&!state.leading.length)lead.append(node('p','Crie um grupo para começar.','sl-muted'))}
 function kpi(parent,n,label){const box=node('div',undefined,'sl-kpi');box.append(node('b',n),node('small',label));parent.append(box)}
 async function openStats(group){const data=await rpc('shema_group_overview',{p_group_id:group.id});$('slDashboard').hidden=false;$('slDashboardTitle').textContent='Acompanhamento · '+data.title;const out=$('slMetrics');out.replaceChildren();kpi(out,data.memberCount||0,'Participantes');kpi(out,data.synced7||0,'Sincronizações em 7 dias');kpi(out,data.synced30||0,'Sincronizações em 30 dias');kpi(out,Number(data.averageHouses||0).toFixed(1),'Média de casas concluídas');const list=$('slParticipants');list.replaceChildren();if(!data.members.length)list.append(node('p','Nenhum participante entrou no grupo.','sl-muted'));data.members.forEach(m=>{const row=node('div',undefined,'sl-row'),col=node('div');col.style.flex='1';const houses=Math.min(365,Math.max(0,Number(m.houses)||0));col.append(node('strong',m.name),node('p',houses+' de 365 casas · '+(Number(m.xp)||0)+' XP','sl-muted'));const bar=node('div',undefined,'sl-progress'),fill=node('i');fill.style.width=((houses/365)*100).toFixed(1)+'%';bar.append(fill);col.append(bar);const d=m.syncedAt&&new Date(m.syncedAt);col.append(node('p',d&&!Number.isNaN(d.getTime())?'Última sincronização: '+d.toLocaleDateString('pt-BR'):'Ainda sem progresso sincronizado','sl-muted'));row.append(col);list.append(row)})}
+$('slRequest').addEventListener('click',()=>act(async()=>{const result=await rpc('shema_request_leadership');status(result&&result.status==='approved'?'Seu perfil de líder já está autorizado.':'Solicitação recebida. O acesso será habilitado após aprovação.');if(result&&result.status==='approved')await loadState()}));
 $('slJoin').addEventListener('click',()=>act(async()=>{if(!$('slConsent').checked)throw Error('Confirme seu consentimento para compartilhar as estatísticas.');await rpc('shema_group_join',{p_code:$('slCode').value.trim(),p_display_name:$('slName').value.trim()});$('slConsent').checked=false;$('slCode').value='';await loadState()}));
 $('slCreate').addEventListener('click',()=>act(async()=>{await rpc('shema_group_create',{p_title:$('slGroupTitle').value.trim()});$('slGroupTitle').value='';await loadState()}));
 function observe(){const s=session(),id=s&&s.user.id||'';if(id===seenId)return;seenId=id;state=null;$('slDashboard').hidden=true;$('slArea').hidden=!id||!env.cloudEnabled;if(!env.cloudEnabled){status('Acompanhamento indisponível: nuvem desativada.');return}if(!id){status('Entre em sua conta do Shema para acessar grupos.');return}status('Buscando seus grupos…');void act(loadState)}
