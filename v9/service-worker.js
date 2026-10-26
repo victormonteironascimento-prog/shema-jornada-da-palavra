@@ -1,8 +1,8 @@
 /* Shema V9 — homologação. A PWA guarda apenas arquivos estáticos da própria prévia.
    Autenticação, dados de nuvem e textos externos nunca entram neste cache. */
 const CACHE_PREFIX='shema-v9-rc1-'+encodeURIComponent(self.registration.scope)+'-';
-const CACHE=CACHE_PREFIX+'20261026-lider-v1';
-const ASSETS=['./config.js','./config-runtime.js','./leader-dashboard.js','./index.html','./app.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable.png'];
+const CACHE=CACHE_PREFIX+'20261026-master-v1';
+const ASSETS=['./config.js','./config-runtime.js','./leader-dashboard.js','./master-dashboard.js','./index.html','./app.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
