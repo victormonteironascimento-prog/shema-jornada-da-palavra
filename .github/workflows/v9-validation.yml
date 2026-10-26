@@ -1,7 +1,7 @@
 name: V9 validation
 on:
   pull_request:
-    branches: [main, release/shema-v9-rc1]
+    branches: [main, release/shema-v9-rc1, feature/painel-lider-v9]
   workflow_dispatch:
 permissions:
   contents: read
