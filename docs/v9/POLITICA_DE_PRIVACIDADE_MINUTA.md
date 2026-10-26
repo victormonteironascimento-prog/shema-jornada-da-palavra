@@ -15,3 +15,7 @@ Esta minuta não deve ser publicada com campos pendentes. A versão final precis
 ## Acompanhamento em grupos (funcionalidade em homologação)
 
 A participação em grupos é voluntária e exige confirmação expressa no aplicativo. Ao ingressar, o participante permite que o líder daquele grupo veja **apenas** o nome de exibição escolhido, quantidade de casas concluídas, XP e data da última sincronização, além de indicadores agregados. O líder não recebe reflexões, orações, marcações de versículos, e-mail de cadastro nem dados completos do progresso armazenado. Sair do grupo encerra esse compartilhamento. A ausência de sincronização não significa ausência de leitura. O responsável deve definir prazo de retenção e procedimentos efetivos de exclusão antes da publicação.
+
+## Acesso administrativo master
+
+O administrador master do Shema poderá consultar indicadores de progresso de todos os cadastros vinculados ao mesmo ambiente, como nome de exibição, e-mail, XP, quantidade de casas concluídas e data da última sincronização. O objetivo é administrar usuários, designar líderes e acompanhar o uso da jornada. **Não são disponibilizados textos particulares de reflexões, orações, anotações nem marcações de leitura.** Os líderes terão acesso apenas aos resumos dos membros que aderirem voluntariamente aos grupos que administram. Esta função ainda está em homologação; antes de uso público, a política definitiva deverá identificar o responsável pelo tratamento, as bases legais aplicáveis, retenção e canais para exercício de direitos.
