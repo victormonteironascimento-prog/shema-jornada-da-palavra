@@ -1,14 +1,14 @@
 name: V9 validation
 on:
   pull_request:
-    branches: [main]
+    branches: [main, release/shema-v9-rc1]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '24'
       - run: pip install -r tests/requirements.txt
-      - run: python -m playwright install --with-deps chromium
+      - run: python -m playwright install chromium
       - run: python tests/validate_v9.py
       - run: python tests/validate_config.py
       - run: python tests/validate_pwa.py
+      - run: node --check v9/leader-dashboard.js
+      - run: python tests/validate_leader.py
