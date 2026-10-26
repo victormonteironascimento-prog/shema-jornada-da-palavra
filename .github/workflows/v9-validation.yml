@@ -24,3 +24,5 @@ jobs:
       - run: python tests/validate_pwa.py
       - run: node --check v9/leader-dashboard.js
       - run: python tests/validate_leader.py
+      - run: node --check v9/master-dashboard.js
+      - run: python tests/validate_master.py
