@@ -1,7 +1,7 @@
 name: V9 validation
 on:
   pull_request:
-    branches: [main]
+    branches: [main, release/shema-v9-rc1]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,3 +22,5 @@ jobs:
       - run: python tests/validate_v9.py
       - run: python tests/validate_config.py
       - run: python tests/validate_pwa.py
+      - run: node --check v9/leader-dashboard.js
+      - run: python tests/validate_leader.py
