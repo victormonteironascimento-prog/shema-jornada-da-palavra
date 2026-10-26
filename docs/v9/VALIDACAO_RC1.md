@@ -56,3 +56,49 @@ ampliada, mantendo interceptação HTTP. Git remoto indisponível pelo proxy;
 a branch, o commit e o PR foram preparados pelo conector GitHub.
 
 Nenhum merge, publicação, deploy ou alteração da `main` foi realizado.
+
+## Revisão técnica do PR #2 — segunda validação, 26/10/2026
+
+Referência: comentário `issuecomment-6417043390`. Esta seção atualiza o resultado
+inicial acima; o teste de SW real local foi acrescentado nesta revisão.
+
+- Cadastro exige 12 caracteres, e-mail válido e senha não composta apenas de
+  espaços. Login legado preservado para contas com senhas menores.
+- Configuração extraída para `v9/config.js` e validada em `config-runtime.js`.
+  Endpoint vinculado ao ambiente, sem fallback para produção ou chave secreta.
+- Modelo e gerador de produção em `config/` e `scripts/`: artefato separado,
+  nuvem desativada, sem chave, sem deploy e sem sobrescrever destinos existentes.
+- Namespace de laboratório preservado; produção usa namespaces próprios, inclusive
+  backups, preferências e sessões. SW usa cache por escopo e consulta apenas seu
+  cache na recuperação offline, evitando retornar página de outro ambiente.
+- CI `V9 validation` configurada para pull requests destinados a `main`, com
+  permissões somente de leitura, Python 3.12, Node 24 e Playwright fixado em 1.62.0.
+  Nenhum segredo ou acesso a Supabase é necessário. O resultado remoto deve ser
+  conferido nos checks do PR; configurar workflow não equivale a CI aprovada.
+
+Comandos executados novamente, todos aprovados:
+
+```sh
+CHROMIUM_PATH=/usr/bin/chromium python tests/validate_v9.py
+CHROMIUM_PATH=/usr/bin/chromium python tests/validate_config.py
+CHROMIUM_PATH=/usr/bin/chromium python tests/validate_pwa.py
+```
+
+A regressão anterior permanece aprovada. Novos cenários: senhas vazia, curta e
+só espaços; cadastro no limite de 12; login com senha legada; corrida entre leitura
+e PATCH (retorno vazio CAS); falhas HTTP 401/403/500 sem alterar registros locais;
+backup acima do limite; configuração ausente/inválida/privilegiada; produção local
+com botões de Auth desativados e sem requisição Supabase; destino existente recusado.
+
+PWA: servidor HTTP loopback, service worker real habilitado, sete assets em cache,
+recarga offline com progresso preservado e controle ausente na página V7 da raiz.
+Não equivale a instalação/atualização em dispositivo real ou domínio publicado.
+Nenhum erro JavaScript de página nos cenários automatizados.
+
+Pendências humanas: mínimo 12 no Auth do servidor, confirmação da proteção contra
+senhas vazadas, dados definitivos da política de privacidade, homologação real de
+Auth/RLS/concorrência/fonte bíblica, instalação e atualização em dispositivo real,
+revisão dos checks CI e futura autorização de ativação/publicação. Ver
+[configuração de produção](CONFIGURACAO_PRODUCAO.md). Nenhuma consulta, gravação ou
+migração foi realizada em Supabase. V7 mantém blob
+`1fefd7f8277dd3591420eacf3d11476e3ece1a1d` e `main` foi preservada.

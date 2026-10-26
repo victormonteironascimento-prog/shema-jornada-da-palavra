@@ -1,10 +1,11 @@
 """Run: python tests/validate_v9.py (Playwright + Chromium required).
 All HTTP is intercepted: no requests reach Supabase or Bible providers.
 """
-import json, re, subprocess
+import json, re, subprocess, os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
+assert subprocess.check_output(['git','hash-object',str(ROOT/'index.html')],text=True).strip()=='1fefd7f8277dd3591420eacf3d11476e3ece1a1d'
 html = (ROOT/'v9/index.html').read_text()
 for i, script in enumerate(re.findall(r'<script\b[^>]*>(.*?)</script>', html, re.S)):
     result = subprocess.run(['node','--check','-'], input=script, text=True, capture_output=True)
@@ -12,9 +13,9 @@ for i, script in enumerate(re.findall(r'<script\b[^>]*>(.*?)</script>', html, re
 subprocess.run(['node','--check',str(ROOT/'v9/service-worker.js')],check=True)
 print('PASS: sintaxe de todos os scripts e service worker')
 with sync_playwright() as p:
-    browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
+    browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH'), args=['--no-sandbox'])
     ctx = browser.new_context(service_workers='block')
-    state = {'row': None, 'writes': 0, 'refreshes': 0}
+    state = {'row': None, 'writes': 0, 'refreshes': 0, 'signups': 0, 'fault': None, 'race': False}
     errors = []
     def route(r):
         req=r.request; url=req.url
@@ -24,6 +25,11 @@ with sync_playwright() as p:
         if '.supabase.co/' in url:
             assert 'ftcxatrfnuhlofpqfvtx.supabase.co' in url, 'Production request!'
             body={}
+            if state['fault'] and '/rest/v1/' in url:
+                r.fulfill(status=state['fault'],json={'message':'Falha simulada'});return
+            if '/auth/v1/signup' in url:
+                state['signups']+=1
+                r.fulfill(json={'user':{'id':'test-user'}});return
             if '/auth/v1/token' in url:
                 if 'refresh_token' in url: state['refreshes']+=1
                 body={'access_token':'fake-token','refresh_token':'fake-refresh','expires_in':3600,'user':{'id':'test-user','email':'test@example.invalid'}}
@@ -32,6 +38,10 @@ with sync_playwright() as p:
                 assert req.headers.get('authorization')=='Bearer fake-token'
                 assert req.method=='POST' or 'user_id=eq.test-user' in url
                 if req.method in ['POST','PATCH']:
+                    if state['race']:
+                        state['race']=False
+                        state['row']['revision']+=1
+                        r.fulfill(json=[]);return
                     state['writes']+=1
                     data=req.post_data_json
                     if req.method=='PATCH':
@@ -78,7 +88,15 @@ with sync_playwright() as p:
     ctx.set_offline(False)
     print('PASS: leitor online simulado, escape HTML, cache offline e capítulo ausente')
     page.evaluate("go('profile')")
-    page.fill('#shemaCloudEmail','test@example.invalid');page.fill('#shemaCloudPassword','test-password')
+    page.fill('#shemaCloudEmail','test@example.invalid')
+    for password in ['', 'abc123', 'a'*11, ' '*12]:
+        page.fill('#shemaCloudPassword',password);page.click('#shemaCloudSignup')
+        assert state['signups']==0
+    page.fill('#shemaCloudPassword','a'*12);page.click('#shemaCloudSignup')
+    page.wait_for_function("document.getElementById('shemaCloudStatus').textContent.includes('Cadastro solicitado')")
+    assert state['signups']==1
+    # Login legado continua permitindo senhas existentes menores que 12.
+    page.fill('#shemaCloudPassword','antiga')
     page.click('#shemaCloudLogin');page.wait_for_function("!document.getElementById('shemaCloudAuthed').hidden")
     page.click('#shemaCloudSave');page.wait_for_function("document.getElementById('shemaCloudStatus').textContent.includes('Progresso salvo')")
     assert state['writes']==1
@@ -98,7 +116,24 @@ with sync_playwright() as p:
     page.wait_for_function("document.getElementById('shemaCloudStatus').textContent.includes('Conectado')")
     assert state['refreshes']==1
     print('PASS: sincronização automática, recuperação remota e renovação de sessão simuladas')
-    for bad in [{'schema':2,'values':{}},{'schema':1,'values':{'evil':'x'}},{'schema':1,'values':{'shemaXP':2}}]:
+    page.evaluate("go('profile')")
+    before=state['writes']
+    local=page.evaluate('ShemaCloudLab.capture().values')
+    state['race']=True
+    page.click('#shemaCloudSave')
+    page.wait_for_function("document.getElementById('shemaCloudStatus').textContent.includes('Conflito:')")
+    assert state['writes']==before
+    assert page.evaluate('ShemaCloudLab.capture().values')==local
+    for code in [401,403,500]:
+        state['fault']=code
+        page.click('#shemaCloudSave')
+        page.wait_for_function("document.getElementById('shemaCloudStatus').textContent.includes('Não foi possível salvar')")
+        page.wait_for_function("!document.getElementById('shemaCloudSave').disabled")
+        assert state['writes']==before
+        assert page.evaluate('ShemaCloudLab.capture().values')==local
+    state['fault']=None
+    print('PASS: cadastro mínimo 12, login legado, corrida CAS e falhas 401/403/500 preservam dados')
+    for bad in [{'schema':2,'values':{}},{'schema':1,'values':{'evil':'x'}},{'schema':1,'values':{'shemaXP':2}}, {'schema':1,'values':{'shemaXP':'x'*3_000_001}}]:
         assert page.evaluate('(x)=>{try{ShemaCloudLab.validSnapshot(x);return false}catch{return true}}',bad)
     page.evaluate("go('profile')")
     page.click('#shemaCloudSignout');page.wait_for_function("!document.getElementById('shemaCloudGuest').hidden")

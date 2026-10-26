@@ -671,9 +671,11 @@ h3 { font-size:calc(16px * var(--shema-ui-font-scale)); }
 <div class="modal" id="modal"><div class="sheet"><div class="row"><div><div class="ey">Personagem</div><h2>Personalizar</h2></div><button class="btn small secondary" onclick="closeModal()">Fechar</button></div><p>Escolha um nome e um símbolo para sua jornada.</p><input id="nameInput" placeholder="Nome do peregrino" style="width:100%;padding:12px;border-radius:12px;border:1px solid #443527;background:#11100d;color:white"/><div style="margin-top:12px"><button class="btn secondary" onclick="setAvatar('🧭')">🧭 Peregrino</button><button class="btn secondary" onclick="setAvatar('🕊️')">🕊️ Mensageiro</button><button class="btn secondary" onclick="setAvatar('🛡️')">🛡️ Guardião</button></div><button class="btn" onclick="saveProfile()">Salvar personagem</button></div></div>
 <div class="toast" id="toast"></div>
 </div>
+<script src="./config.js"></script>
+<script src="./config-runtime.js"></script>
 <script>// Shema V9: namespace exclusivo para o progresso local.
 // A Biblia offline pode continuar compartilhada, pois nao contem progresso pessoal.
-const SHEMA_V9_STORAGE_PREFIX='shema-v9-atlas-preview::';
+const SHEMA_V9_STORAGE_PREFIX=ShemaEnvironment.storagePrefix;
 const shemaV9Storage=new Proxy(Object.create(null),{
   get(_target,property){
     if(property==='getItem')return key=>window.localStorage.getItem(SHEMA_V9_STORAGE_PREFIX+String(key));
@@ -1725,7 +1727,7 @@ refresh();
  });
  backup.addEventListener('click',()=>{
   // Exporta só o namespace desta prévia; nunca lê dados da conta pública.
-  const prefix='shema-v9-atlas-preview::';const values={};
+  const prefix=ShemaEnvironment.storagePrefix;const values={};
   for(let i=0;i<localStorage.length;i++){
    const key=localStorage.key(i);if(key&&key.startsWith(prefix))values[key.slice(prefix.length)]=localStorage.getItem(key);
   }
@@ -1746,7 +1748,7 @@ refresh();
   if(!bundle||bundle.type!=='backup-completo-preview'||bundle.schema!==1||!bundle.values||typeof bundle.values!=='object'||Array.isArray(bundle.values)){status('Este arquivo não é um backup completo da prévia do Shema.');return;}
   const entries=Object.entries(bundle.values).filter(([key,value])=>(permitted.has(key)||/^shemaNote(?:[1-9]|[1-9]\d{1,2})$/.test(key))&&typeof value==='string'&&value.length<=2*1024*1024);
   if(!entries.length){status('O backup não contém registros compatíveis.');return;}
-  const prefix='shema-v9-atlas-preview::';const additions=entries.filter(([k])=>localStorage.getItem(prefix+k)===null);
+  const prefix=ShemaEnvironment.storagePrefix;const additions=entries.filter(([k])=>localStorage.getItem(prefix+k)===null);
   if(!additions.length){status('Os registros deste backup já existem no aparelho. Nada foi substituído.');return;}
   if(!confirm('Recuperar '+additions.length+' registro(s) ausente(s)? Os dados que já existem neste aparelho serão preservados. O aplicativo será recarregado.'))return;
   try{for(const [key,value] of additions)localStorage.setItem(prefix+key,value);}catch{status('Sem espaço para completar a restauração. Confira os dados antes de fechar a página.');return;}
@@ -1762,7 +1764,7 @@ refresh();
 <script id="shema-font-controls-v1-script">
 /* Ajustes de tipografia independentes do progresso, com persistência local. */
 (()=>{'use strict';
- const PREFIX='shema-v9-atlas-preview::settings:';
+ const PREFIX=ShemaEnvironment.storagePrefix+'settings:';
  const UI_KEY=PREFIX+'font-ui-percent', BIBLE_KEY=PREFIX+'font-bible-px';
  const UI_MIN=85,UI_MAX=120,UI_STEP=5,BIBLE_MIN=16,BIBLE_MAX=26,BIBLE_STEP=1;
  const $=id=>document.getElementById(id);
@@ -1807,23 +1809,24 @@ refresh();
    Nunca carrega senhas em armazenamento; apenas sessão temporária nesta aba.
 */
 (()=>{'use strict';
- const URL='https://ftcxatrfnuhlofpqfvtx.supabase.co';
- const PUBLIC_KEY='sb_publishable_Q-Frp4aUAZkOFLd9sETLlA_0PbJuki-';
- const LOCAL_PREFIX='shema-v9-atlas-preview::';
- const TOKEN_KEY='shema-v9-laboratorio::sessao';
- const ARCHIVE_PREFIX='shema-v9-laboratorio::arquivo::';
+ const URL=ShemaEnvironment.url;
+ const PUBLIC_KEY=ShemaEnvironment.publicKey;
+ const LOCAL_PREFIX=ShemaEnvironment.storagePrefix;
+ const TOKEN_KEY=ShemaEnvironment.accountPrefix+'sessao';
+ const ARCHIVE_PREFIX=ShemaEnvironment.accountPrefix+'arquivo::';
  const MAX_BYTES=3_000_000;
  const $=id=>document.getElementById(id);
  const section=$('profile');if(!section)return;
  const panel=document.createElement('section'); panel.className='shema-cloud-card';
- panel.innerHTML=` <div class="ey">CONTINUIDADE DA JORNADA · TESTES DE ESTABILIDADE</div>
+ panel.innerHTML=` <div class="ey">CONTINUIDADE DA JORNADA</div>
  <h2>Minha conta e progresso</h2>
- <p>Entre para testar o salvamento seguro entre aparelhos. Este laboratório usa <strong>um banco de testes separado</strong> e não modifica sua conta principal. Os dados não são enviados sem confirmação.</p>
+ <p>${ShemaEnvironment.environment==='production'?'Candidata de produção: nuvem desativada para revisão local.':'Laboratório: banco de testes separado.'} O envio automático só ocorre após ativação.</p>
  <p id="shemaCloudStatus" class="shema-cloud-status" role="status" aria-live="polite">Preparando acesso…</p>
  <div id="shemaCloudGuest">
    <label>E-mail <input id="shemaCloudEmail" type="email" inputmode="email" autocomplete="username" placeholder="seu@email.com"/></label>
-   <label>Senha <input id="shemaCloudPassword" type="password" autocomplete="current-password" placeholder="Sua senha do ambiente de testes" minlength="6"/></label>
-   <div class="shema-cloud-actions"><button id="shemaCloudLogin" type="button">Entrar</button><button id="shemaCloudSignup" type="button" class="secondary">Criar conta de teste</button></div>
+   <label>Senha <input id="shemaCloudPassword" type="password" autocomplete="current-password" placeholder="Sua senha" aria-describedby="shemaPasswordHelp"/></label>
+   <p id="shemaPasswordHelp" class="shema-cloud-subtle">Para criar conta, use pelo menos 12 caracteres. Prefira uma frase longa e exclusiva.</p>
+   <div class="shema-cloud-actions"><button id="shemaCloudLogin" type="button">Entrar</button><button id="shemaCloudSignup" type="button" class="secondary">Criar conta</button></div>
  </div>
  <div id="shemaCloudAuthed" hidden>
    <p class="shema-cloud-user">Conectado: <strong id="shemaCloudUser"></strong></p>
@@ -1849,9 +1852,9 @@ refresh();
  const busy=b=>['shemaCloudLogin','shemaCloudSignup','shemaCloudSave','shemaCloudLoad','shemaCloudSignout','shemaCloudAuto','shemaCloudReset'].forEach(id=>$(id).disabled=b);
  let session=null, revision=null, remoteExists=false, remote=null;
  // Sincronização opcional: o servidor jamais é sobrescrito sem uma revisão CAS correspondente.
- const AUTO_PREFIX='shema-v9-laboratorio::auto::';
+ const AUTO_PREFIX=ShemaEnvironment.accountPrefix+'auto::';
  // Nunca retomar envio automático quando o progresso local foi associado a outra conta.
- const LOCAL_OWNER_KEY='shema-v9-laboratorio::ultimo_usuario_local';
+ const LOCAL_OWNER_KEY=ShemaEnvironment.accountPrefix+'ultimo_usuario_local';
  function localOwner(){try{return localStorage.getItem(LOCAL_OWNER_KEY)||null;}catch{return null;}}
  function rememberOwner(){if(!session?.user?.id)return;try{localStorage.setItem(LOCAL_OWNER_KEY,session.user.id);}catch{}}
 
@@ -1904,7 +1907,7 @@ refresh();
      const snapshot=capture(), hash=autoFingerprint(snapshot);
      if(hash===autoHash){autoMessage('Nuvem atualizada.');return;}
      if(!remoteExists||revision===null){autoStop('Não há cópia remota de referência. Salve manualmente antes de reativar.',true);return;}
-     autoMessage('Salvando alterações na nuvem de testes…');
+     autoMessage('Salvando alterações na nuvem…');
      const expected=Number(revision), current=await read();
      if(!current||Number(current.revision)!==expected){autoStop('Outro aparelho alterou o progresso. Nenhum dado foi substituído. Resolva usando os botões manuais.',true);return;}
      const token=await access(), uid=session.user.id;
@@ -1934,6 +1937,7 @@ refresh();
  }
  const jheaders=(token)=>({'apikey':PUBLIC_KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})});
  async function request(path,opts={}){
+   if(!ShemaEnvironment.cloudEnabled)throw new Error('Nuvem desativada nesta configuração.');
    const response=await fetch(URL+path,{...opts,headers:{...jheaders(opts.token),...(opts.headers||{})},cache:'no-store'});
    const body=await response.text();let data;try{data=body?JSON.parse(body):null;}catch{data=null;}
    if(!response.ok){const err=new Error((data?.msg||data?.error_description||data?.message||data?.error||'Falha na comunicação')+' (HTTP '+response.status+')');err.status=response.status;err.code=data?.code;throw err;}
@@ -1977,11 +1981,11 @@ refresh();
    $('shemaCloudRemote').textContent=remoteExists?'Existe um salvamento remoto. Revisão '+revision+'.':'Esta conta ainda não tem progresso salvo.';
    return rows[0]||null;
  }
- async function signedIn(user){session.user=user;$('shemaCloudGuest').hidden=true;$('shemaCloudAuthed').hidden=false;$('shemaCloudUser').textContent=user.email||'Conta de teste';await read();autoRestore();status('Conectado ao ambiente de testes. Escolha salvar ou recuperar o progresso.');}
+ async function signedIn(user){session.user=user;$('shemaCloudGuest').hidden=true;$('shemaCloudAuthed').hidden=false;$('shemaCloudUser').textContent=user.email||'Conta de teste';await read();autoRestore();status('Conectado. Escolha salvar ou recuperar o progresso.');}
  async function login(){const email=$('shemaCloudEmail').value.trim(),password=$('shemaCloudPassword').value;if(!email||!password){status('Informe e-mail e senha.',true);return;}
    busy(true);status('Validando credenciais…');try{const r=await request('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});if(!r.access_token||!r.user?.id)throw new Error('Login sem sessão válida.');sessionStore({access_token:r.access_token,refresh_token:r.refresh_token,user:r.user,expires_at:Date.now()+r.expires_in*1000});$('shemaCloudPassword').value='';await signedIn(r.user);}
    catch(e){status('Não foi possível entrar: '+e.message,true);}finally{busy(false);}}
- async function signup(){const email=$('shemaCloudEmail').value.trim(),password=$('shemaCloudPassword').value;if(!email||password.length<6){status('Informe e-mail e senha com pelo menos 6 caracteres.',true);return;}
+ async function signup(){const email=$('shemaCloudEmail').value.trim(),password=$('shemaCloudPassword').value;if(!$('shemaCloudEmail').checkValidity()||!email||password.length<12||!password.trim()){status('Informe e-mail válido e senha com pelo menos 12 caracteres, que não seja apenas espaços.',true);return;}
    busy(true);try{const r=await request('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});$('shemaCloudPassword').value='';
      if(r.access_token&&r.user?.id){sessionStore({access_token:r.access_token,refresh_token:r.refresh_token,user:r.user,expires_at:Date.now()+r.expires_in*1000});await signedIn(r.user);}
      else status('Cadastro solicitado. Confira o e-mail de confirmação e depois toque em Entrar.');
@@ -1989,20 +1993,20 @@ refresh();
  async function save(){if(!session)return;if(autoWorking||manualWorking){status('Salvamento em andamento. Tente novamente em instantes.');return;}manualWorking=true;busy(true);status('Conferindo revisão do salvamento remoto…');try{
      const snapshot=capture(), lastSeen=revision;
      const current=await read();if((current?.revision??null)!==lastSeen){if(autoOn)autoStop('Conflito entre aparelhos: sincronização pausada.',true);status('Outra sessão alterou a nuvem. Nada foi sobrescrito. Reavalie antes de salvar.',true);return;}
-     if(current){const typed=confirm('Existe progresso nesta conta de teste. Substituir a cópia REMOTA pelos dados deste aparelho? A versão remota será arquivada localmente antes.');if(!typed){status('Operação cancelada: nada foi alterado.');return;}archive(current.progress_data,'antes_de_substituir_nuvem');}
+     if(current){const typed=confirm('Existe progresso nesta conta. Substituir a cópia REMOTA pelos dados deste aparelho? A versão remota será arquivada localmente antes.');if(!typed){status('Operação cancelada: nada foi alterado.');return;}archive(current.progress_data,'antes_de_substituir_nuvem');}
      else if(!confirm('Criar o primeiro salvamento remoto com o progresso deste aparelho?')){status('Operação cancelada.');return;}
      const token=await access(),uid=session.user.id, data=current?
        await request('/rest/v1/user_progress?user_id=eq.'+encodeURIComponent(uid)+'&revision=eq.'+current.revision,{method:'PATCH',token,headers:{Prefer:'return=representation'},body:JSON.stringify({progress_data:snapshot,revision:current.revision+1,updated_at:new Date().toISOString()})}):
        await request('/rest/v1/user_progress',{method:'POST',token,headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:uid,progress_data:snapshot,revision:0})});
      if(!Array.isArray(data)||data.length!==1){status('Conflito: não foi possível gravar porque a nuvem mudou. Seus dados locais foram mantidos.',true);await read();return;}
-     revision=data[0].revision; remoteExists=true;remote=snapshot;autoHash=autoFingerprint(snapshot);autoPaused=false;rememberOwner();autoPersist();autoRender();status('Progresso salvo na nuvem de testes (revisão '+revision+').');await read();
+     revision=data[0].revision; remoteExists=true;remote=snapshot;autoHash=autoFingerprint(snapshot);autoPaused=false;rememberOwner();autoPersist();autoRender();status('Progresso salvo na nuvem (revisão '+revision+').');await read();
    }catch(e){status('Não foi possível salvar: '+e.message+'. Seus dados locais continuam aqui.',true);}finally{manualWorking=false;busy(false);if(autoOn)autoCheck();}}
  async function load(){if(!session)return;if(autoWorking||manualWorking){status('Salvamento em andamento. Tente novamente em instantes.');return;}manualWorking=true;busy(true);try{const current=await read();if(!current){status('Esta conta não possui progresso remoto para recuperar.',true);return;}
       validSnapshot(current.progress_data);
-      if(!confirm('Recuperar o progresso da nuvem de TESTES neste aparelho? Será criado um arquivo local de segurança antes de substituir os dados da prévia.')){status('Recuperação cancelada.');return;}
+      if(!confirm('Recuperar o progresso da nuvem neste aparelho? Será criado um arquivo local de segurança antes de substituir os dados da prévia.')){status('Recuperação cancelada.');return;}
       status('Protegendo dados locais e recuperando a nuvem…');if(autoOn){autoHash=autoFingerprint(current.progress_data);autoPersist();}rememberOwner();install(current.progress_data);
     }catch(e){status('Recuperação não concluída: '+e.message,true);}finally{manualWorking=false;busy(false);}}
- async function logout(){if(autoWorking||manualWorking)return;busy(true);try{if(session){const token=await access();await request('/auth/v1/logout',{method:'POST',token,body:'{}'}).catch(()=>null);}}finally{autoStop('Sincronização desativada após sair da conta.');autoHash=null;autoWorking=false;sessionStore(null);remote=null;revision=null;remoteExists=false;$('shemaCloudGuest').hidden=false;$('shemaCloudAuthed').hidden=true;$('shemaCloudPassword').value='';busy(false);status('Você saiu da conta de testes. O progresso local foi mantido neste aparelho.');}}
+ async function logout(){if(autoWorking||manualWorking)return;busy(true);try{if(session){const token=await access();await request('/auth/v1/logout',{method:'POST',token,body:'{}'}).catch(()=>null);}}finally{autoStop('Sincronização desativada após sair da conta.');autoHash=null;autoWorking=false;sessionStore(null);remote=null;revision=null;remoteExists=false;$('shemaCloudGuest').hidden=false;$('shemaCloudAuthed').hidden=true;$('shemaCloudPassword').value='';busy(false);status('Você saiu da contas. O progresso local foi mantido neste aparelho.');}}
  function reset(){if(autoWorking||manualWorking){status('Aguarde o envio ou salvamento terminar antes de reiniciar.',true);return;}if(!confirm('Reiniciar SOMENTE o progresso da jornada local? Marcadores, notas e nuvem serão preservados.'))return;
    const word=prompt('Para confirmar, digite REINICIAR:');if(word!=='REINICIAR'){status('Reinício cancelado.');return;}
    try{if(autoOn)autoStop('Sincronização desligada para não apagar o progresso da nuvem durante o reinício local.');archive(capture(),'antes_de_reiniciar_jornada');for(const k of ['shemaXP','shemaSteps','shemaPlayable','shemaHouse','shemaTask4Done','shemaStreakCount','shemaStreakLastDate'])localStorage.removeItem(LOCAL_PREFIX+k);
@@ -2021,7 +2025,8 @@ refresh();
  async function resume(){let s=null;try{s=JSON.parse(sessionStorage.getItem(TOKEN_KEY)||'null');}catch{}
     if(!s?.access_token||!s.user?.id){status('Você está no modo local. Entre para testar a nuvem.');return;}
     sessionStore(s);try{const token=await access();const u=await request('/auth/v1/user',{token});if(u?.id!==session.user.id)throw new Error('Sessão de outra conta.');await signedIn(u);}catch(e){sessionStore(null);status('A sessão anterior terminou. Entre novamente para continuar.');}}
- resume();
+ if(ShemaEnvironment.cloudEnabled)resume();
+ else { for(const id of ['shemaCloudLogin','shemaCloudSignup'])$(id).disabled=true; status('Nuvem desativada. Seu progresso permanece apenas neste aparelho.',true); }
  window.ShemaCloudLab={capture,validSnapshot,readOnlyEnvironment:'shema-v9-teste'};
 })();
 

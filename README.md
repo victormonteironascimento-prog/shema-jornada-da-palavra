@@ -10,7 +10,9 @@ migração. Nenhum comando de banco ou deploy faz parte desta integração.
 
 - [Relatório independente de validação](docs/v9/VALIDACAO_RC1.md)
 - Testes: `python tests/validate_v9.py` (Python, Node, Playwright 1.62.0 e Chromium
-  em `/usr/bin/chromium`). Todas as chamadas HTTP externas são interceptadas.
+  instalado pelo Playwright; use `CHROMIUM_PATH=/usr/bin/chromium` para o navegador
+  do sistema). Execute também `tests/validate_config.py` e `tests/validate_pwa.py`.
+  A PWA usa apenas servidor local e service worker real; serviços externos são bloqueados.
 - `docs/v9/MIGRACAO_PRODUCAO_REVISAO_E_PERMISSOES.sql` é material recebido para
   revisão futura, não uma migração aplicada. Os comentários sobre estado do banco
   pertencem ao pacote e não foram confirmados nesta integração.
@@ -18,3 +20,6 @@ migração. Nenhum comando de banco ou deploy faz parte desta integração.
   de uso público.
 
 Não publicar a V9 nem executar SQL contra produção sem homologação separada.
+
+- [Configuração separada de produção e pendências humanas](docs/v9/CONFIGURACAO_PRODUCAO.md).
+- CI: `.github/workflows/v9-validation.yml` executa as três suítes, sem deploy ou acesso a banco.
