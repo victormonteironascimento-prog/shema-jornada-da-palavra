@@ -2,7 +2,7 @@
 
 **Aplicativo:** Shema — Jornada da Palavra  
 **Responsável pelo tratamento:** [PREENCHER NOME OU ORGANIZAÇÃO]  
-**Contato de privacidade e suporte:** [PREENCHER E-MAIL]
+**Contato de privacidade e suporte:** shemasuporte@gmail.com
 
 O Shema oferece leitura bíblica, conteúdos educativos e armazenamento de progresso. Conforme a função utilizada, o aplicativo poderá tratar endereço de e-mail, identificador de conta, dados de acesso, histórico da jornada, XP, reflexões e anotações salvas. Algumas preferências e conteúdos bíblicos também poderão ficar gravados apenas no armazenamento local do navegador.
 
