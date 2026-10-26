@@ -1,0 +1,6 @@
+{
+  "environment": "production",
+  "cloudEnabled": false,
+  "supabaseUrl": "https://ghzvomquldrqpsosvbig.supabase.co",
+  "publishableKey": ""
+}
