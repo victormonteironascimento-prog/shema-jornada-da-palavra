@@ -1,7 +1,7 @@
 name: V9 validation
 on:
   pull_request:
-    branches: [main, release/shema-v9-rc1, feature/painel-lider-v9]
+    branches: [main, release/shema-v9-rc1, feature/painel-lider-v9, feature/master-admin-v9]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,3 +26,6 @@ jobs:
       - run: python tests/validate_leader.py
       - run: node --check v9/master-dashboard.js
       - run: python tests/validate_master.py
+      - run: node --check v9/genealogy-data.js
+      - run: node --check v9/genealogy.js
+      - run: python tests/validate_genealogy.py
