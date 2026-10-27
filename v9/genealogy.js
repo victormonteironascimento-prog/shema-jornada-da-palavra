@@ -73,7 +73,7 @@ style.textContent=[
 '#genealogia .sg-foot{margin:15px 0 28px;padding:15px;border-left:3px solid #b58d4f;color:#cbbb9e;background:#201911;border-radius:12px;font:12px/1.65 system-ui}',
 '#genealogia .sg-foot strong{color:#e7c68d;font-size:14px}',
 '#genealogia .sg-foot p{margin:6px 0 0}',
-'#genealogia #sg-drawer{position:fixed;z-index:60;top:0;right:0;bottom:0;width:min(440px,100vw);overflow:auto;background:#f9f2e7;color:#2a211a;padding:65px 22px 32px;border-left:3px solid #8a5e33;box-shadow:-15px 0 80px #0009}',
+'#genealogia #sg-drawer{position:fixed;z-index:9001;top:0;right:0;bottom:0;width:min(440px,100vw);overflow:auto;background:#f9f2e7;color:#2a211a;padding:65px 22px 32px;border-left:3px solid #8a5e33;box-shadow:-15px 0 80px #0009}',
 '#genealogia .sg-close{position:absolute;top:18px;right:18px;background:none;border:0;font-size:24px;color:#39271c;padding:7px;min-width:40px}',
 '#genealogia .sg-detail-ey{font:700 10px system-ui;letter-spacing:.2em;color:#ac613d}',
 '#genealogia #sg-drawer h2{font:normal 30px Georgia,serif;color:#2a211a;margin:8px 0}',
