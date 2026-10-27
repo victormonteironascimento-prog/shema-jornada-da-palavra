@@ -148,6 +148,16 @@ const details={
 'Moisés':['Da família levítica','Êxodo 6:20; Números 26:59','Filho de Anrão e Joquebede, irmão de Arão e Miriã.'],
 'Arão':['Sacerdote da família de Levi','Êxodo 6:20–25','Pai de Nadabe, Abiú, Eleazar e Itamar, com Eliseba.']
 };
+// Leitura teológica identificada separadamente do parentesco histórico. Fonte: referências bíblicas indicadas.
+const messianic={
+ 'Adão':'1 Coríntios 15:45 apresenta Cristo como o último Adão. É uma comparação teológica, não outra linha de descendência.',
+ 'Abraão':'Gálatas 3:16 relaciona a promessa feita à descendência de Abraão a Cristo.',
+ 'Judá':'Apocalipse 5:5 chama Cristo de Leão da tribo de Judá.',
+ 'Davi':'Lucas 1:32–33 anuncia a associação do Messias ao trono de Davi.',
+ 'Jesus':'Mateus 1:1 e Lucas 3:23–38 apresentam Jesus no centro de suas genealogias, cada uma com sua organização.',
+ 'Boaz':'Rute 4:13–22 apresenta Boaz como ancestral de Davi; Mateus 1:5–6 o relaciona à sequência que chega a Jesus.',
+ 'Rute':'Rute 4:13–22 e Mateus 1:5 registram sua presença na linhagem de Davi e de Jesus.'
+};
 Object.freeze(views);
-window.ShemaGenealogyData=Object.freeze({views,details});
+window.ShemaGenealogyData=Object.freeze({views,details,messianic});
 })();
