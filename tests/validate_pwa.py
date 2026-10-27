@@ -23,7 +23,7 @@ try:
         page.wait_for_function('navigator.serviceWorker.controller!==null')
         assert page.evaluate('navigator.serviceWorker.controller.scriptURL').endswith('/v9/service-worker.js')
         keys=page.evaluate('caches.keys()');assert len(keys)==1
-        assert page.evaluate("async()=>{const c=await caches.open((await caches.keys())[0]);return (await c.keys()).length}")==9
+        assert page.evaluate("async()=>{const c=await caches.open((await caches.keys())[0]);return (await c.keys()).length}")==11
         page.evaluate("localStorage.setItem('shemaXP','777');shemaV9Storage.setItem('shemaName','Offline RC');caches.open('v7-preserved')")
         ctx.set_offline(True)
         page.reload(wait_until='domcontentloaded')
@@ -38,4 +38,4 @@ try:
         browser.close()
 finally:
     server.shutdown();server.server_close()
-print('PASS: service worker real, 7 assets, reload offline, progresso persistente, V7 fora do escopo')
+print('PASS: service worker real, 11 assets, reload offline, progresso persistente, V7 fora do escopo')
