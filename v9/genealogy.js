@@ -29,6 +29,7 @@ section.innerHTML=[
 '<div class="sg-detail-ey">FICHA BÍBLICA</div><h2 id="sg-detail-title"></h2><div id="sg-detail-sub"></div>',
 '<div class="sg-detail-block"><b>Referência bíblica</b><p id="sg-detail-ref"></p></div>',
 '<div class="sg-detail-block"><b>Identificação e contexto</b><p id="sg-detail-context"></p></div>',
+'<div class="sg-detail-block sg-detail-warning"><b>Conexão messiânica · leitura teológica</b><p id="sg-detail-messianic"></p></div>',
 '<div class="sg-detail-block"><b>Família / relação registrada</b><div id="sg-detail-relations"></div></div>',
 '<div class="sg-detail-block sg-detail-warning"><b>Cuidados textuais e variantes</b><p id="sg-detail-note"></p></div>',
 '<button type="button" id="sg-detail-go" class="sg-detail-exit">Voltar à árvore</button></aside>'
@@ -176,6 +177,7 @@ function detail(n){
  const generic='Registro da linhagem “'+active.title+'”. Consulte o trecho citado para o contexto narrativo e os detalhes da geração.';
  const note=data.details[n.name];
  setText('sg-detail-context',(note?note[0]+'. '+note[2]:generic)+(n.kind==='agrupamento'?' Este cartão representa um grupo, não um ancestral individual.':''));
+ setText('sg-detail-messianic',data.messianic?.[n.name]||'Não foi indicada conexão messiânica específica para esta pessoa nos trechos tratados. Não completar essa lacuna por suposição.');
  const rel=$('sg-detail-relations');rel.replaceChildren();
  const current=active.nodes.find(x=>x.id===n.id);
  if(current?.parent){const par=active.nodes.find(x=>x.id===current.parent);
